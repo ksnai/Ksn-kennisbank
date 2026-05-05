@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#f97316" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="KSN Kennis" />
+  <title>KSN AI Kennisbank</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, Helvetica, sans-serif; }
+    :root {
+      --orange:#f97316; --orange-dark:#ea580c; --orange-light:#fff7ed;
+      --bg:#f3f4f6; --text:#1f2937; --muted:#6b7280; --border:#e5e7eb; --white:#fff;
+    }
+    body { background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 86px; }
+    .app { max-width: 1100px; margin: 0 auto; padding: 14px; }
+    .header { background: linear-gradient(135deg,#fff,#fff7ed); border-radius: 24px; padding: 18px; box-shadow: 0 6px 20px rgba(15,23,42,.08); margin-bottom: 14px; }
+    .header-top { display:flex; align-items:center; gap:12px; }
+    .logo { width:54px; height:54px; border-radius:18px; background:var(--orange); color:white; display:flex; justify-content:center; align-items:center; font-size:27px; box-shadow:0 8px 18px rgba(249,115,22,.28); flex-shrink:0; }
+    h1 { font-size:24px; line-height:1.1; }
+    .subtitle { color:var(--muted); font-size:14px; margin-top:5px; }
+    .status-row { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:16px; }
+    .status-card { background:white; border:1px solid #fed7aa; border-radius:16px; padding:10px; text-align:center; }
+    .status-number { color:var(--orange-dark); font-size:20px; font-weight:800; }
+    .status-label { font-size:11px; color:var(--muted); margin-top:2px; }
+    .desktop-tabs { display:none; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:14px; }
+    .tab-btn { border:0; border-radius:16px; background:white; color:#475569; padding:13px 10px; font-weight:800; cursor:pointer; box-shadow:0 3px 10px rgba(15,23,42,.05); }
+    .tab-btn.active { background:var(--orange); color:white; }
+    .screen { display:none; }
+    .screen.active { display:block; }
+    .card { background:white; border-radius:24px; padding:16px; box-shadow:0 6px 20px rgba(15,23,42,.07); }
+    .section-title { font-size:20px; margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+    .chat-box { height:430px; overflow-y:auto; background:white; border:1px solid var(--border); border-radius:20px; padding:12px; margin-bottom:12px; scroll-behavior:smooth; }
+    .message-row { display:flex; margin-bottom:10px; }
+    .message-row.user { justify-content:flex-end; }
+    .message { max-width:88%; border-radius:18px; padding:11px 13px; font-size:14px; line-height:1.45; white-space:pre-line; }
+    .message.bot { background:#f1f5f9; }
+    .message.user { background:var(--orange); color:white; }
+    .input-row { display:flex; gap:8px; margin-bottom:12px; }
+    input, textarea, select { width:100%; border:1px solid #d1d5db; border-radius:16px; padding:13px; font-size:16px; outline:none; background:white; }
+    textarea { min-height:105px; resize:vertical; }
+    input:focus, textarea:focus, select:focus { border-color:var(--orange); box-shadow:0 0 0 3px rgba(249,115,22,.13); }
+    button { border:0; border-radius:16px; padding:12px 14px; font-weight:800; cursor:pointer; }
+    .btn-orange { background:var(--orange); color:white; }
+    .btn-light { background:var(--orange-light); color:var(--orange-dark); border:1px solid #fed7aa; }
+    .send-btn { width:56px; flex-shrink:0; font-size:18px; }
+    .quick-grid { display:grid; gap:8px; }
+    .quick-grid button { text-align:left; background:var(--orange-light); color:var(--orange-dark); border:1px solid #fed7aa; font-weight:700; }
+    .search-box { margin-bottom:14px; }
+    .list { display:grid; gap:10px; }
+    .knowledge-item, .category-item, .admin-block { border:1px solid var(--border); border-radius:18px; background:white; padding:14px; }
+    .knowledge-category { color:var(--orange-dark); font-size:12px; font-weight:900; margin-bottom:5px; }
+    .knowledge-item h3 { font-size:16px; margin-bottom:6px; }
+    .knowledge-item p, .small-text { color:var(--muted); font-size:14px; line-height:1.5; }
+    .source-label { display:inline-block; margin-top:8px; background:#f8fafc; color:#64748b; border:1px solid var(--border); border-radius:999px; padding:4px 9px; font-size:12px; font-weight:700; }
+    .category-item { display:flex; justify-content:space-between; align-items:center; }
+    .category-left { display:flex; gap:10px; align-items:center; font-weight:800; }
+    .category-icon { width:43px; height:43px; border-radius:14px; background:var(--orange-light); color:var(--orange-dark); display:flex; align-items:center; justify-content:center; font-size:20px; }
+    .count { color:#94a3b8; font-size:13px; font-weight:800; }
+    .form-grid { display:grid; gap:10px; }
+    .admin-actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
+    .notice { background:#fffbeb; color:#92400e; border:1px solid #fde68a; border-radius:18px; padding:13px; font-size:14px; line-height:1.45; margin-bottom:14px; }
+    .bottom-nav { position:fixed; bottom:0; left:0; right:0; background:white; border-top:1px solid var(--border); display:grid; grid-template-columns:repeat(4,1fr); box-shadow:0 -6px 20px rgba(15,23,42,.10); z-index:50; padding-bottom:env(safe-area-inset-bottom); }
+    .bottom-nav button { background:white; color:#64748b; border-radius:0; padding:10px 4px; font-size:11px; }
+    .bottom-nav button.active { color:var(--orange-dark); }
+    .nav-icon { display:block; font-size:20px; margin-bottom:2px; }
+    .empty { color:var(--muted); padding:10px 0; font-size:14px; }
+    @media (min-width:768px) {
+      body { padding-bottom:24px; }
+      .app { padding:28px; }
+      h1 { font-size:34px; }
+      .desktop-tabs { display:grid; }
+      .bottom-nav { display:none; }
+      .quick-grid, .category-grid { grid-template-columns:1fr 1fr; }
+      .chat-box { height:500px; }
+      .admin-layout { display:grid; grid-template-columns:1.1fr .9fr; gap:14px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="header-top">
+        <div class="logo">📚</div>
+        <div>
+          <h1>KSN AI Kennisbank</h1>
+          <p class="subtitle">Echte AI-assistent voor Ketel Service Noord</p>
+        </div>
+      </div>
+      <div class="status-row">
+        <div class="status-card"><div class="status-number" id="docCount">0</div><div class="status-label">kennisitems</div></div>
+        <div class="status-card"><div class="status-number">AI</div><div class="status-label">gekoppeld</div></div>
+        <div class="status-card"><div class="status-number">V1</div><div class="status-label">versie</div></div>
+      </div>
+    </header>
+
+    <div class="desktop-tabs">
+      <button class="tab-btn active" id="desktop-chat" onclick="showScreen('chat')">💬 Chat</button>
+      <button class="tab-btn" id="desktop-kennis" onclick="showScreen('kennis')">🔎 Kennis</button>
+      <button class="tab-btn" id="desktop-categorieen" onclick="showScreen('categorieen')">📂 Categorieën</button>
+      <button class="tab-btn" id="desktop-beheer" onclick="showScreen('beheer')">⚙️ Beheer</button>
+    </div>
+
+    <main>
+      <section id="screen-chat" class="screen active">
+        <div class="card">
+          <h2 class="section-title">🤖 Vraag aan de AI-kennisbank</h2>
+          <div class="chat-box" id="chatBox">
+            <div class="message-row">
+              <div class="message bot">Hallo! Stel een vraag over storingen, onderhoud, abonnementen, werkbonnen, planning of klantcommunicatie.</div>
+            </div>
+          </div>
+          <div class="input-row">
+            <input id="questionInput" type="text" placeholder="Typ je vraag..." onkeydown="handleEnter(event)" />
+            <button class="btn-orange send-btn" onclick="sendQuestion()">➤</button>
+          </div>
+          <div class="quick-grid">
+            <button onclick="sendQuickQuestion('Wanneer mag een klant een Zeker-abonnement?')">Wanneer mag een klant een Zeker-abonnement?</button>
+            <button onclick="sendQuickQuestion('Wat moet er minimaal op een werkbon staan?')">Wat moet er minimaal op een werkbon staan?</button>
+            <button onclick="sendQuickQuestion('Welke tekst stuur ik bij een afgekeurde ketel?')">Welke tekst stuur ik bij een afgekeurde ketel?</button>
+            <button onclick="sendQuickQuestion('Hoe plan ik een nieuwe onderhoudsafspraak in?')">Hoe plan ik een nieuwe onderhoudsafspraak in?</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="screen-kennis" class="screen">
+        <div class="card">
+          <h2 class="section-title">🔎 Kennisbank zoeken</h2>
+          <input class="search-box" id="searchInput" type="text" placeholder="Zoek op onderwerp..." oninput="renderKnowledge()" />
+          <div class="list" id="knowledgeList"></div>
+        </div>
+      </section>
+
+      <section id="screen-categorieen" class="screen">
+        <div class="card">
+          <h2 class="section-title">📂 Categorieën</h2>
+          <div class="list category-grid">
+            <div class="category-item"><div class="category-left"><span class="category-icon">🔧</span>Storingen</div><span class="count">42</span></div>
+            <div class="category-item"><div class="category-left"><span class="category-icon">🛡️</span>Onderhoud</div><span class="count">18</span></div>
+            <div class="category-item"><div class="category-left"><span class="category-icon">🧾</span>Werkbonnen</div><span class="count">9</span></div>
+            <div class="category-item"><div class="category-left"><span class="category-icon">📅</span>Planning</div><span class="count">12</span></div>
+            <div class="category-item"><div class="category-left"><span class="category-icon">👥</span>Klantcommunicatie</div><span class="count">24</span></div>
+            <div class="category-item"><div class="category-left"><span class="category-icon">📄</span>Eigen kennis</div><span class="count" id="categoryDocCount">0</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="screen-beheer" class="screen">
+        <div class="admin-layout">
+          <div class="card">
+            <h2 class="section-title">⚙️ Kennis toevoegen</h2>
+            <div class="notice">Toegevoegde kennis wordt lokaal in deze browser opgeslagen en meegestuurd naar de AI. Later kunnen we dit vervangen door een centrale database en document-upload.</div>
+            <div class="form-grid">
+              <input id="newTitle" type="text" placeholder="Titel, bijvoorbeeld: Remeha storing E5" />
+              <select id="newCategory">
+                <option>Storingen</option><option>Onderhoud</option><option>Werkbonnen</option><option>Planning</option><option>Klantcommunicatie</option><option>Documenten</option>
+              </select>
+              <textarea id="newText" placeholder="Plaats hier de werkinstructie, uitleg of standaardtekst..."></textarea>
+              <input id="newSource" type="text" placeholder="Bron, bijvoorbeeld: interne instructie / handleiding / Patrick" />
+            </div>
+            <div class="admin-actions">
+              <button class="btn-light" onclick="clearForm()">Wissen</button>
+              <button class="btn-orange" onclick="addKnowledge()">Opslaan</button>
+            </div>
+          </div>
+          <div class="card" style="margin-top:14px;">
+            <h2 class="section-title">📲 Installeren</h2>
+            <p class="small-text">Zet deze Vercel-link op je beginscherm. iPhone: Delen → Zet op beginscherm. Android: Menu → Toevoegen aan startscherm.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <nav class="bottom-nav">
+    <button id="mobile-chat" class="active" onclick="showScreen('chat')"><span class="nav-icon">💬</span>Chat</button>
+    <button id="mobile-kennis" onclick="showScreen('kennis')"><span class="nav-icon">🔎</span>Kennis</button>
+    <button id="mobile-categorieen" onclick="showScreen('categorieen')"><span class="nav-icon">📂</span>Categorieën</button>
+    <button id="mobile-beheer" onclick="showScreen('beheer')"><span class="nav-icon">⚙️</span>Beheer</button>
+  </nav>
+
+  <script>
+    const defaultKnowledge = [
+      { title:"Zeker-abonnement bij oudere cv-ketel", category:"Onderhoud", text:"Bij een ketel van 8 jaar of ouder wordt een Zeker-abonnement automatisch omgezet naar Standaard. Informeer de klant duidelijk waarom dit gebeurt.", source:"Interne abonnementsregel" },
+      { title:"Werkbon volledig invullen", category:"Werkbonnen", text:"Monteuren moeten storingsoorzaak, uitgevoerde werkzaamheden, gebruikte materialen en advies aan klant invullen voordat de werkbon wordt afgerond.", source:"Interne werkwijze" },
+      { title:"Nieuwe klant afspraak inplannen", category:"Planning", text:"Controleer adres, toesteltype, bereikbaarheid, parkeerinformatie en of er bijzonderheden zijn voordat de afspraak wordt bevestigd.", source:"Planning instructie" },
+      { title:"Tekst bij afgekeurde ketel", category:"Klantcommunicatie", text:"Leg uit welke veiligheidsreden meespeelt, welke opties de klant heeft en dat herstel of vervanging nodig is voordat veilig gebruik mogelijk is.", source:"Standaard klanttekst" }
+    ];
+
+    let knowledge = loadKnowledge();
+
+    function loadKnowledge() {
+      const saved = localStorage.getItem("ksn_knowledge");
+      if (!saved) return defaultKnowledge;
+      try { return JSON.parse(saved); } catch (e) { return defaultKnowledge; }
+    }
+    function saveKnowledge() {
+      localStorage.setItem("ksn_knowledge", JSON.stringify(knowledge));
+      updateCounts();
+    }
+    function updateCounts() {
+      document.getElementById("docCount").textContent = knowledge.length;
+      document.getElementById("categoryDocCount").textContent = knowledge.length;
+    }
+    function showScreen(name) {
+      document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+      document.getElementById("screen-" + name).classList.add("active");
+      ["chat","kennis","categorieen","beheer"].forEach(tab => {
+        const mobile = document.getElementById("mobile-" + tab);
+        const desktop = document.getElementById("desktop-" + tab);
+        if (mobile) mobile.classList.toggle("active", tab === name);
+        if (desktop) desktop.classList.toggle("active", tab === name);
+      });
+      if (name === "kennis") renderKnowledge();
+    }
+    function addMessage(role, text) {
+      const chatBox = document.getElementById("chatBox");
+      const row = document.createElement("div");
+      row.className = "message-row " + role;
+      const bubble = document.createElement("div");
+      bubble.className = "message " + role;
+      bubble.textContent = text;
+      row.appendChild(bubble);
+      chatBox.appendChild(row);
+      chatBox.scrollTop = chatBox.scrollHeight;
+      return bubble;
+    }
+    async function askAI(question) {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question, knowledge })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || data.details || "AI-fout");
+      return data.answer;
+    }
+    async function sendQuestion() {
+      const input = document.getElementById("questionInput");
+      const question = input.value.trim();
+      if (!question) return;
+      addMessage("user", question);
+      input.value = "";
+      const loading = addMessage("bot", "AI denkt na...");
+      try {
+        loading.textContent = await askAI(question);
+      } catch (error) {
+        loading.textContent = "Er ging iets mis met de AI-koppeling: " + error.message;
+      }
+    }
+    function sendQuickQuestion(question) {
+      showScreen("chat");
+      document.getElementById("questionInput").value = question;
+      sendQuestion();
+    }
+    function handleEnter(event) {
+      if (event.key === "Enter") sendQuestion();
+    }
+    function renderKnowledge() {
+      const search = document.getElementById("searchInput").value.toLowerCase();
+      const list = document.getElementById("knowledgeList");
+      list.innerHTML = "";
+      const filtered = knowledge.filter(item => (item.title + " " + item.category + " " + item.text + " " + item.source).toLowerCase().includes(search));
+      if (filtered.length === 0) {
+        list.innerHTML = '<div class="empty">Geen resultaten gevonden.</div>';
+        return;
+      }
+      filtered.forEach(item => {
+        const div = document.createElement("div");
+        div.className = "knowledge-item";
+        div.innerHTML = `
+          <div class="knowledge-category">${escapeHtml(item.category)}</div>
+          <h3>${escapeHtml(item.title)}</h3>
+          <p>${escapeHtml(item.text)}</p>
+          <span class="source-label">Bron: ${escapeHtml(item.source || "Onbekend")}</span>
+        `;
+        list.appendChild(div);
+      });
+    }
+    function addKnowledge() {
+      const title = document.getElementById("newTitle").value.trim();
+      const category = document.getElementById("newCategory").value;
+      const text = document.getElementById("newText").value.trim();
+      const source = document.getElementById("newSource").value.trim() || "Handmatig toegevoegd";
+      if (!title || !text) {
+        alert("Vul minimaal een titel en tekst in.");
+        return;
+      }
+      knowledge.unshift({ title, category, text, source });
+      saveKnowledge();
+      clearForm();
+      renderKnowledge();
+      alert("Kennisitem opgeslagen.");
+      showScreen("kennis");
+    }
+    function clearForm() {
+      document.getElementById("newTitle").value = "";
+      document.getElementById("newText").value = "";
+      document.getElementById("newSource").value = "";
+      document.getElementById("newCategory").value = "Storingen";
+    }
+    function escapeHtml(value) {
+      return String(value).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+    }
+    updateCounts();
+    renderKnowledge();
+  </script>
+</body>
+</html>
