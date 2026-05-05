@@ -16,16 +16,16 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Geen vraag ontvangen" });
     }
 
-    // Interne kennis netjes maken
     const safeKnowledge = Array.isArray(knowledge)
       ? knowledge
-          .slice(0, 80)
+          .slice(0, 100)
           .map((item, index) => {
             return [
               `Kennisitem ${index + 1}`,
               `Titel: ${item.title || "Geen titel"}`,
               `Categorie: ${item.category || "Onbekend"}`,
               `Tekst: ${item.text || ""}`,
+              `Bron: ${item.source || "Onbekend"}`,
             ].join("\n");
           })
           .join("\n\n")
@@ -34,69 +34,107 @@ export default async function handler(req, res) {
     const response = await client.responses.create({
       model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
 
-      // 🔥 HYBRIDE: internet + eigen kennis
       tools: [
         {
           type: "web_search",
         },
       ],
 
+      temperature: 0.2,
+
       instructions: `
-Je bent een senior servicemonteur cv-ketels (15+ jaar ervaring).
+Je bent de technische AI-assistent van Ketel Service Noord.
 
-De gebruiker is ook monteur. Geef GEEN basisuitleg.
+Je helpt monteurs en installateurs met cv-ketel storingen, onderhoud, diagnose en klantgerelateerde technische vragen.
 
-DOEL:
-Geef direct bruikbare diagnose op locatie.
+BELANGRIJK:
+- De gebruiker is monteur/installateur, geen consument.
+- Gebruik geen consumententaal.
+- Zeg niet standaard "bel een monteur", want de gebruiker is zelf monteur.
+- Geef geen lange algemene uitleg.
+- Geef praktische diagnose alsof je zelf naast de ketel staat.
+- Verzin geen fabriekswaarden, foutcodes of onderdelen.
+- Als je iets niet zeker weet: zeg dat kort en geef de beste controlevolgorde.
+- Gebruik eerst interne kennis.
+- Als interne kennis ontbreekt of onvoldoende is, mag je internet gebruiken.
+- Bij internetinformatie: benoem kort dat het externe informatie is.
+- Bij gaslucht, CO-risico, rookgaslekkage of acuut gevaar: eerst veiligstellen.
 
-VERBODEN:
-- "raadpleeg handleiding"
-- "verschilt per situatie"
-- algemene uitleg zonder actie
-- consumententaal
+ANTWOORDFORMAT:
+Gebruik altijd dit format:
 
-VERPLICHT:
+Oorzaak:
+- ...
 
-Geef ALTIJD:
+Check:
+- ...
 
-1. Meest waarschijnlijke oorzaak
-2. Concreet wat je moet meten / checken
-3. Richtwaarden (indien bekend of gebruikelijk)
-4. Praktische actie
+Richtwaarde:
+- ...
+
+Actie:
+- ...
+
+Veiligheid:
+- ...
 
 STIJL:
 - Kort
 - Direct
-- Werkvloer taal
-- Geen nette zinnen nodig
+- Technisch
+- Werkvloer-taal
+- Geen marketing
+- Geen overbodige waarschuwingen
 
 VOORBEELD:
-
-Vraag: stuwdruk te laag
+Vraag: storing E36 Remeha Calenta
 
 Antwoord:
-
 Oorzaak:
-- pomp te laag ingesteld of vervuild
-- lucht in systeem
-- bypass open
+- Rookgastraject / luchttoevoer probleem
+- Mogelijk ventilator of drukverschilprobleem
 
 Check:
-- pompstand (min/max)
-- drukverschil aanvoer/retour
-- lucht in radiatoren / ketel
+- Rookgasafvoer en luchttoevoer op blokkade
+- Condensafvoer / sifon
+- Ventilator loopt aan en komt op toeren
+- Stekkers en bedrading ventilator / pressostaat / sensor
 
 Richtwaarde:
-- meestal 0,2 – 0,5 bar verschil (indicatie)
+- Geen waarde noemen als die niet zeker is
+- Vergelijk meetwaarden met toestelgegevens indien nodig
 
 Actie:
-- pomp hoger zetten
-- ontluchten
-- vuilfilter checken
+- Rookgastraject vrijmaken
+- Condensafvoer reinigen
+- Ventilator controleren / vervangen indien defect
+- Reset pas na herstel
 
----
+Veiligheid:
+- Bij rookgaslucht of CO-risico: toestel buiten bedrijf stellen
+      `.trim(),
 
-Gebruik eerst interne kennis.
-Zo niet → gebruik internet.
-Maar geef altijd praktisch antwoord alsof je zelf op locatie staat.
-`.trim(),
+      input: `
+Interne kennisbank:
+${safeKnowledge || "Geen interne kennis beschikbaar."}
+
+Vraag van monteur:
+${question}
+      `.trim(),
+    });
+
+    const answer =
+      response.output_text ||
+      response.output?.[0]?.content?.[0]?.text ||
+      "Geen antwoord ontvangen van de AI.";
+
+    return res.status(200).json({ answer });
+  } catch (error) {
+    console.error("AI fout:", error);
+
+    return res.status(500).json({
+      error: "AI fout",
+      details: error?.message || String(error),
+    });
+  }
+}
